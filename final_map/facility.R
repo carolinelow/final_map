@@ -220,9 +220,9 @@ tester <- final_com %>%
   geom_polygon(
     mapping = aes(x = long, y = lat, group = group, 
                   LST = LST, fill = number))
-test_chart<- final_psych %>%
+test_chart<- final_total %>%
   full_join(age_data, by = "CASEID") %>%
-  mutate(LST = LST.x) %>%
+  mutate(LST = LST.x)  %>%
   filter(LST == "CO") %>%
   select(CASEID, CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS, LST) %>%
   na.omit() %>%
@@ -231,12 +231,53 @@ test_chart<- final_psych %>%
   summarise_each(funs = sum) %>%
   gather() %>%
   ggplot() +
-  geom_col(aes(x = key, y = value, fill = value))  
+  geom_col(aes(x = key, y = value, fill = value)) 
 test_map <- map_total %>%
   ggplot() +
   geom_polygon(
     mapping = aes(x = long, y = lat, group = group, 
                   LST = LST, fill = number)) 
 test_map_two <- final_com %>%
-  left_join(state_map, by = "LST") %>%
-  select(long, lat, group, order, LST, number)
+  full_join(state_map, by = "LST") %>%
+  select(CASEID, long, lat, group, order, LST, number) %>%
+  distinct(order, .keep_all = TRUE) %>%
+  ggplot() +
+  geom_polygon(
+    mapping = aes(x = long, y = lat, group = group, 
+                  LST = LST, fill = number))
+new_chart <- final_com %>%
+  left_join(age_data, by = "LST") %>%
+  filter(LST == "CO") %>%
+  select(CASEID.x, CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS, LST) %>%
+  na.omit() %>%
+  distinct(CASEID.x, .keep_all = TRUE) %>%
+  select(CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS) %>%
+  summarise_each(funs = sum) %>%
+  gather() %>%
+  ggplot() +
+  geom_col(aes(x = key, y = value, fill = value,
+               text = paste("Number of Facilities:", value)))
+test_chart_two<- final_com %>%
+  full_join(age_data, by = "CASEID") %>%
+  mutate(LST = LST.x)  %>%
+  filter(LST == "CO") %>%
+  select(CASEID, CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS, LST) %>%
+  na.omit() %>%
+  distinct(CASEID, .keep_all = TRUE) %>%
+  select(CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS) %>%
+  summarise_each(funs = sum) %>%
+  gather() %>%
+  ggplot() +
+  geom_col(aes(x = key, y = value, fill = value)) 
+test_chart_three <- final_com %>%
+  left_join(age_data, by = "CASEID") %>%
+  filter(LST.x == "CO") %>%
+  select(CASEID, CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS, LST.x) %>%
+  na.omit() %>%
+  distinct(CASEID, .keep_all = TRUE) %>%
+  select(CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS) %>%
+  summarise_each(funs = sum) %>%
+  gather() %>%
+  ggplot() +
+  geom_col(aes(x = key, y = value, fill = value,
+               text = paste("Number of Facilities:", value)))

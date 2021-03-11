@@ -75,45 +75,48 @@ ui <- fluidPage(
 server <- function(input, output) {
     facilities_input <- reactive({
         if (input$facilities == "total") {
-            dataset <- map_total
+            dataset <- final_total
         }
         if (input$facilities == "psych") {
-            dataset <- map_psych
+            dataset <- final_psych
         }
         if (input$facilities == "separate") {
-            dataset <- map_separate
+            dataset <- final_separate
         }
         if (input$facilities == "res_child") {
-            dataset <- map_res_child
+            dataset <- final_res_child
         }
         if (input$facilities == "res_adult") {
-            dataset <- map_res_adult
+            dataset <- final_res_adult
         }
         if (input$facilities == "other_res") {
-            dataset <- map_other_res
+            dataset <- final_other_res
         }
         if (input$facilities == "vet") {
-            dataset <- map_vet
+            dataset <- final_vet
         }
         if (input$facilities == "com") {
-            dataset <- map_com
+            dataset <- final_com
         }
         if (input$facilities == "partial") {
-            dataset <- map_partial
+            dataset <- final_partial
         }
         if (input$facilities == "outpatient") {
-            dataset <- map_outpatient
+            dataset <- final_outpatient
         }
         if (input$facilities == "multi") {
-            dataset <- map_multi
+            dataset <- final_multi
         }
         else if (input$facilities == "other") {
-            dataset <- map_other
+            dataset <- final_other
         }
         return(dataset)
     })
     output$facility_map <- renderPlotly({
         {facilities_input() %>%
+                full_join(state_map, by = "LST") %>%
+                select(CASEID, long, lat, group, order, LST, number) %>%
+                distinct(order, .keep_all = TRUE) %>%
                 ggplot() +
                 geom_polygon(
                     mapping = aes(x = long, y = lat, group = group, 
@@ -133,10 +136,9 @@ server <- function(input, output) {
         })
     output$facility_graph <- renderPlotly({
         {facilities_input() %>%
-                full_join(age_data, by = "CASEID") %>%
-                mutate(LST = LST.x) %>%
-                filter(LST == input$state) %>%
-                select(CASEID, CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS, long, lat, group, order, number, LST) %>%
+                left_join(age_data, by = "CASEID") %>%
+                filter(LST.x == input$state) %>%
+                select(CASEID, CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS, LST.x) %>%
                 na.omit() %>%
                 distinct(CASEID, .keep_all = TRUE) %>%
                 select(CHILDAD, ADOLES, YOUNGADULTS, ADULT, SENIORS) %>%
@@ -144,8 +146,7 @@ server <- function(input, output) {
                 gather() %>%
                 ggplot() +
                 geom_col(aes(x = key, y = value, fill = value,
-                             text = paste("Number of Facilities:", value)))
-        } %>%
+                             text = paste("Number of Facilities:", value)))} %>%
             ggplotly(tooltip = "text")
     })
 }
